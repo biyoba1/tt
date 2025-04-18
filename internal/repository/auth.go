@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"database/sql"
+	"fmt"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -13,27 +15,40 @@ func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
 }
 
 func (r *AuthPostgres) SaveRefreshToken(guid string, hashedRefreshToken []byte) error {
-	query := `INSERT INTO auth (guid, hashed_token) VALUES ($1, $2)`
-	_, err := r.db.Exec(query, guid, hashedRefreshToken)
+	query := `SELECT COUNT(*) FROM auth WHERE guid = $1`
+	var exist bool
+	err := r.db.QueryRow(query, guid).Scan(&exist)
 	if err != nil {
 		return err
 	}
-	return nil
+	if !exist {
+		query := `INSERT INTO auth (guid, hashed_token) VALUES ($1, $2)`
+		_, err := r.db.Exec(query, guid, hashedRefreshToken)
+		if err != nil {
+			return fmt.Errorf("failed to save refresh token: %w", err)
+		}
+		return nil
+	} else {
+		query := `UPDATE auth SET hashed_token = $1 WHERE guid = $2`
+		_, err := r.db.Exec(query, hashedRefreshToken, guid)
+		if err != nil {
+			return fmt.Errorf("failed to save refresh token: %w", err)
+		}
+		return nil
+	}
+
 }
 
-func (r *AuthPostgres) CheckRefreshToken(guid []byte) (string, string, error) {
-	query := `SELECT hashed_token FROM %s WHERE guid=$1`
-	res, err := r.db.Exec(query, guid)
-}
+func (r *AuthPostgres) CheckRefreshToken(guid string) ([]byte, error) {
+	query := `SELECT hashed_token FROM auth WHERE guid = $1`
+	var storedHash []byte
+	err := r.db.QueryRow(query, guid).Scan(&storedHash)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, sql.ErrNoRows
+		}
+		return nil, err
+	}
 
-func (r *AuthPostgres) GetRefreshTokenByToken(refreshToken string) (string, string, error) {
-	return "", "", nil
-}
-
-func (r *AuthPostgres) UpdateRefreshToken(userID int64, newHashedRefreshToken string, tokenID string) error {
-	return nil
-}
-
-func (r *AuthPostgres) GetUserByRefreshToken(hashedRefreshToken string) (int64, error) {
-	return 0, nil
+	return storedHash, nil
 }

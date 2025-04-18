@@ -35,7 +35,7 @@ func main() {
 	srv := new(mdk.Server)
 	port := os.Getenv("PORT")
 	log.Printf("Server is running on port %s", port)
-	if err := srv.Run(port, handlers.InitRoutes()); err != nil {
+	if err := srv.Run(port, handlers.RegisterRoutes()); err != nil {
 		log.Fatalf("error running a server: %s", err.Error())
 	}
 }

@@ -1,11 +1,12 @@
 package handler
 
 import (
-	"errors"
-	"github.com/gin-gonic/gin"
+	"encoding/json"
+	"net/http"
 )
 
-func errorResponse(c *gin.Context, statusCode int, message string) error {
-	c.AbortWithStatusJSON(statusCode, gin.H{"error": message})
-	return errors.New(message)
+func errorResponse(w http.ResponseWriter, statusCode int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(map[string]string{"error": message})
 }

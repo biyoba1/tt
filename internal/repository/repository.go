@@ -6,11 +6,7 @@ import (
 
 type AuthRepository interface {
 	SaveRefreshToken(guid string, hashedRefreshToken []byte) error
-	CheckRefreshToken(hashedRefreshToken []byte) (string, string, error)
-
-	GetRefreshTokenByToken(refreshToken string) (string, string, error) // hashedToken, tokenID, error
-	UpdateRefreshToken(userID int64, newHashedRefreshToken string, tokenID string) error
-	GetUserByRefreshToken(hashedRefreshToken string) (int64, error)
+	CheckRefreshToken(guid string) ([]byte, error)
 }
 
 type Repository struct {

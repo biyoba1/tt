@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
+	"net/http"
 	"valera/internal/service"
 )
 
@@ -13,14 +13,11 @@ func NewHandler(services *service.Service) *Handler {
 	return &Handler{services: services}
 }
 
-func (h *Handler) InitRoutes() *gin.Engine {
-	router := gin.Default()
+func (h *Handler) RegisterRoutes() http.Handler {
+	mux := http.NewServeMux()
 
-	auth := router.Group("/auth")
-	{
-		auth.POST("/sign-up", h.signUp)
-		auth.POST("/refresh", h.refreshToken)
-	}
+	mux.HandleFunc("/auth/sign-up", h.signUp)
+	mux.HandleFunc("/auth/refresh", h.refreshToken)
 
-	return router
+	return mux
 }
